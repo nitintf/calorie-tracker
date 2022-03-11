@@ -44,6 +44,7 @@ function App() {
                         element={<Auth forAdmin={true} element={<Reports/>}/>}
                     />
                     <Route path='/404' element={<NotFoundPage/>}/>
+                    <Route path='/*' element={<NotFoundPage/>}/>
                 </Routes>
             </BrowserRouter>
         </>

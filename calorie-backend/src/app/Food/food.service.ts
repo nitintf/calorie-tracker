@@ -69,8 +69,10 @@ export default class FoodService {
 			let { page, startDate, endDate } = req.query
 			const query: FindCondition<Food> = {}
 
+			if(+page < 1) page = '1'
+
 			if(moment(endDate as MomentInput) > moment(new Date())) {
-				return errorResponse(res, "Invalid End Date", 400)
+				return errorResponse(res, "Invalid End Date")
 			}
 
 			if (startDate && endDate) {

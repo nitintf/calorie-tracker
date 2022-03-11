@@ -1,4 +1,4 @@
-import {Box, Flex} from '@chakra-ui/react'
+import {Box, Flex, Tooltip} from '@chakra-ui/react'
 import React from 'react'
 import {BiCategoryAlt, BiHomeAlt} from 'react-icons/bi'
 import {IoStatsChart} from 'react-icons/io5'
@@ -9,6 +9,14 @@ import CustomLink from './UI/CustomLink'
 
 const SideBar: React.FC = () => {
     const {user} = useAppSelector((state) => state.user)
+
+    const toolTipProps = (label: string) => ({
+        label,
+        shouldWrapChildren: true,
+        ml : "1rem",
+        hasArrow:true,
+        placement:'right' as const
+    })
 
     return (
         <Flex
@@ -24,15 +32,21 @@ const SideBar: React.FC = () => {
                 <MdOutlineFastfood/>
             </Box>
             <CustomLink to={ROUTES.HOME}>
-                <BiHomeAlt/>
+                <Tooltip {...toolTipProps('Home')}>
+                    <BiHomeAlt/>
+                </Tooltip>
             </CustomLink>
             <CustomLink to={ROUTES.CATEGORIES}>
-                <BiCategoryAlt/>
+                <Tooltip {...toolTipProps('Categories')}>
+                    <BiCategoryAlt/>
+                </Tooltip>
             </CustomLink>
 
             {user?.admin && (
                 <CustomLink to={ROUTES.REPORTS}>
+                    <Tooltip {...toolTipProps('Reports')}>
                     <IoStatsChart/>
+                    </Tooltip>
                 </CustomLink>
             )}
         </Flex>

@@ -5,11 +5,10 @@ export const errorResponse = (
 	message: string,
 	httpCode = 400
 ) => {
-	return res
+	return res.status(httpCode)
 		.json([
 			{
 				message,
 			},
 		])
-		.status(httpCode)
 }

@@ -15,14 +15,16 @@ const NotFoundPage: React.FC = () => {
             justifyContent='center'
             flexDir={'column'}>
             <Heading>Something went wrong</Heading>
-            {userError && <Heading>401 - Unauthorized</Heading>}
-            <Text>
-                tak me back to{' '}
-                <Link to={HOME}>
-                    {'  '}
-                    <strong style={{textDecoration: 'underline'}}>Home</strong>
-                </Link>
-            </Text>
+            {userError ? <Heading>401 - Unauthorized</Heading> : <>
+                <Text>
+                    take me back to{' '}
+                    <Link to={HOME}>
+                        {'  '}
+                        <strong style={{textDecoration: 'underline'}}>Home</strong>
+                    </Link>
+                </Text>
+            </>}
+
         </Flex>
     )
 }
