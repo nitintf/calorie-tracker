@@ -1,5 +1,5 @@
 export const fonts = {
-	Body: 'Montserrat',
-	Heading: 'Montserrat',
-	Box: 'Montserrat',
+    Body: 'Montserrat',
+    Heading: 'Montserrat',
+    Box: 'Montserrat',
 }

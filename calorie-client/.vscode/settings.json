@@ -1,5 +1,5 @@
 {
-	"editor.formatOnSave": true,
-	"editor.cursorSmoothCaretAnimation": true,
-	"editor.cursorBlinking": "phase"
+  "editor.formatOnSave": true,
+  "editor.cursorSmoothCaretAnimation": true,
+  "editor.cursorBlinking": "phase"
 }

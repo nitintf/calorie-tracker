@@ -5,6 +5,7 @@ export const createFoodSchema = Joi.object({
 	categoryId: Joi.optional(),
 	dateTime: Joi.date().required(),
 	calorie: Joi.number().min(1).required(),
+	userId: Joi.number().min(1).required(),
 })
 
 export const updateFoodSchema = Joi.object({

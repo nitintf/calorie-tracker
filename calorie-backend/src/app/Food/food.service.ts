@@ -6,6 +6,7 @@ import { errorResponse } from '../../helpers/response'
 import Category from '../Category/category.entity'
 import Food from './food.entity'
 import { createFoodSchema, updateFoodSchema } from './food.schema'
+import User from "../User/user.entity";
 
 type ReportT = {
 	today: number
@@ -15,7 +16,7 @@ type ReportT = {
 
 export default class FoodService {
 	static async create(req: Request, res: Response) {
-		const { name, categoryId, calorie, dateTime } = req.body
+		const { name, categoryId, calorie, dateTime, userId } = req.body
 		const { error } = createFoodSchema.validate(req.body)
 
 		if (error) {
@@ -27,8 +28,16 @@ export default class FoodService {
 
 			if (!category) return errorResponse(res, 'Category not found', 404)
 
+			const user = await User.findOne(userId)
+
+			if(!user) return errorResponse(res, "User not found", 404)
+
 			const foodsCount = await Food.count({
-				where: { categoryId, userId: req.currentUser.id },
+				where: {
+					categoryId,
+					userId: req.currentUser.id,
+					date: moment(new Date()).format('YYYY-MM-DD'),
+				},
 			})
 
 			if (foodsCount >= category.maxFoodItems) {
@@ -44,7 +53,7 @@ export default class FoodService {
 			food.name = name
 			food.dateTime = dateTime
 			food.categoryId = categoryId
-			food.userId = req.currentUser?.id
+			food.userId = userId
 			food.date = moment(req.body.dateTime).format('YYYY-MM-DD')
 
 			await Food.save(food)
@@ -59,6 +68,10 @@ export default class FoodService {
 			const { currentUser } = req
 			let { page, startDate, endDate } = req.query
 			const query: FindCondition<Food> = {}
+
+			if(moment(endDate as MomentInput) > moment(new Date())) {
+				return errorResponse(res, "Invalid End Date", 400)
+			}
 
 			if (startDate && endDate) {
 				startDate = moment(startDate as MomentInput)
@@ -149,7 +162,11 @@ export default class FoodService {
 			if (!category) return errorResponse(res, 'Category not found', 404)
 
 			const foodsCount = await Food.count({
-				where: { categoryId, userId: req.currentUser.id },
+				where: {
+					categoryId,
+					userId: req.currentUser.id,
+					date: moment(dateTime).format('YYYY-MM-DD'),
+				},
 			})
 
 			if (foodsCount >= category.maxFoodItems) {

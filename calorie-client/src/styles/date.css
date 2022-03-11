@@ -1,13 +1,13 @@
 .date-range {
-	min-width: 260px;
-	padding: 12px;
-	border-radius: 4px;
+    min-width: 260px;
+    padding: 12px;
+    border-radius: 4px;
 }
 
 .date-picker {
-	background-color: transparent;
-	font-size: 14px;
-	font-weight: 600;
+    background-color: transparent;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* admin can update a food for user */
