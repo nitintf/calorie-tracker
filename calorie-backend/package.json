@@ -5,7 +5,9 @@
 	"main": "index.js",
 	"scripts": {
 		"dev:watch": "ts-node-dev --respawn --transpile-only src/app.ts",
-		"dev": "ts-node src/app.ts"
+		"dev": "ts-node src/app.ts",
+		"seed": "ts-node src/seed.ts",
+		"update": "ts-node src/update.ts"
 	},
 	"keywords": [],
 	"author": "",

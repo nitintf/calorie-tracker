@@ -120,9 +120,9 @@ export default class FoodService {
 				const sum = responseCaloriesSum.find(
 					(sum) => sum[`${food.date}-${food.userId}`]
 				)
-
+				const {user: _, ...foodsObj} = food
 				return {
-					...food,
+					...foodsObj,
 					dailyCalorieSum: Object.values(sum)[0],
 					dailyCalorieLimit: food.user.dailyCalorieLimit,
 				}

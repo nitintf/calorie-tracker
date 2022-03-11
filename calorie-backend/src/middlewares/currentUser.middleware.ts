@@ -15,8 +15,8 @@ const currentUserMiddleware = async (
 	res: Response,
 	next: NextFunction
 ) => {
-	const token = req.headers.authorization
-
+	const token = req.headers.authorization.split(' ')[1]
+	console.log(token)
 	if (token) {
 		try {
 			const userId = verifyJwt(token)
@@ -27,13 +27,13 @@ const currentUserMiddleware = async (
 			}
 
 			req.currentUser = user
-			next()
+			return next()
 		} catch (err) {
 			return res.sendStatus(401)
 		}
 	}
 
-	return res.status(401)
+	return res.status(401).send('Unauthorized')
 }
 
 export default currentUserMiddleware
