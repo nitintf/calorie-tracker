@@ -1,7 +1,7 @@
 import { Button, Flex } from '@chakra-ui/react'
 import React from 'react'
 import DatePicker from 'react-datepicker'
-import { MdFilterListAlt } from 'react-icons/md'
+import { MdClear, MdFilterListAlt } from 'react-icons/md'
 
 interface TopBarProps {
 	setAddNew: () => void
@@ -35,6 +35,13 @@ const TopBar: React.FC<TopBarProps> = ({
 		reload()
 	}
 
+	const clearFilter = () => {
+		setStartDate(null)
+		setEndDate(null)
+		setPage(1)
+		reload()
+	}
+
 	return (
 		<Flex>
 			<Flex bg='white' borderWidth={'thin'} alignItems='center' px={2}>
@@ -57,6 +64,17 @@ const TopBar: React.FC<TopBarProps> = ({
 						cursor: 'pointer',
 					}}
 				/>
+				{startDate && endDate && (
+					<MdClear
+						onClick={clearFilter}
+						style={{
+							marginLeft: '10px',
+							color: 'teal',
+							fontSize: '35px',
+							cursor: 'pointer',
+						}}
+					/>
+				)}
 			</Flex>
 			<Button
 				ml='auto'
