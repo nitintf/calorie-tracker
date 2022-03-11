@@ -1,44 +1,44 @@
-import {Flex} from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 import * as React from 'react'
-import {FC} from 'react'
-import {Navigate} from 'react-router-dom'
-import {useAppSelector} from '../redux/hooks'
+import { FC } from 'react'
+import NotFoundPage from '../pages/PageNotFound'
+import { useAppSelector } from '../redux/hooks'
 import Spinner from './UI/Spinner'
 
 interface IProps {
-    forAdmin?: boolean
-    element: JSX.Element
+	forAdmin?: boolean
+	element: JSX.Element
 }
 
-const Auth: FC<IProps> = ({forAdmin = false, element}) => {
-    const {user, userError} = useAppSelector((state) => state.user)
+const Auth: FC<IProps> = ({ forAdmin = false, element }) => {
+	const { user, userError } = useAppSelector((state) => state.user)
 
-    if (!user && !userError)
-        return (
-            <>
-                <Flex
-                    width='100vw'
-                    height='100vh'
-                    alignItems='center'
-                    justifyContent='center'>
-                    <Spinner/>
-                </Flex>
-            </>
-        )
+	if (!user && !userError)
+		return (
+			<>
+				<Flex
+					width='100vw'
+					height='100vh'
+					alignItems='center'
+					justifyContent='center'>
+					<Spinner />
+				</Flex>
+			</>
+		)
 
-    if (userError && !user) {
-        return <Navigate to='/404' replace={true}/>
-    }
+	if (userError && !user) {
+		return <NotFoundPage />
+	}
 
-    if (!forAdmin) {
-        return element
-    }
+	if (!forAdmin) {
+		return element
+	}
 
-    if (forAdmin && user?.admin) {
-        return element
-    }
+	if (forAdmin && user?.admin) {
+		return element
+	}
 
-    return <Navigate to='/' replace={true}/>
+	return <NotFoundPage />
 }
 
 export default React.memo(Auth)

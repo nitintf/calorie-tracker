@@ -6,7 +6,7 @@ import { errorResponse } from '../../helpers/response'
 import Category from '../Category/category.entity'
 import Food from './food.entity'
 import { createFoodSchema, updateFoodSchema } from './food.schema'
-import User from "../User/user.entity";
+import User from '../User/user.entity'
 
 type ReportT = {
 	today: number
@@ -30,7 +30,7 @@ export default class FoodService {
 
 			const user = await User.findOne(userId)
 
-			if(!user) return errorResponse(res, "User not found", 404)
+			if (!user) return errorResponse(res, 'User not found', 404)
 
 			const foodsCount = await Food.count({
 				where: {
@@ -43,7 +43,7 @@ export default class FoodService {
 			if (foodsCount >= category.maxFoodItems) {
 				return errorResponse(
 					res,
-					'Category Max limit reached please select another',
+					`${category.name} Max limit reached please select another`,
 					409
 				)
 			}
@@ -69,10 +69,10 @@ export default class FoodService {
 			let { page, startDate, endDate } = req.query
 			const query: FindCondition<Food> = {}
 
-			if(+page < 1) page = '1'
+			if (+page < 1) page = '1'
 
-			if(moment(endDate as MomentInput) > moment(new Date())) {
-				return errorResponse(res, "Invalid End Date")
+			if (moment(endDate as MomentInput) > moment(new Date())) {
+				return errorResponse(res, 'Invalid End Date')
 			}
 
 			if (startDate && endDate) {
@@ -120,7 +120,7 @@ export default class FoodService {
 				const sum = responseCaloriesSum.find(
 					(sum) => sum[`${food.date}-${food.userId}`]
 				)
-				const {user: _, ...foodsObj} = food
+				const { user: _, ...foodsObj } = food
 				return {
 					...foodsObj,
 					dailyCalorieSum: Object.values(sum)[0],
