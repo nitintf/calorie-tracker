@@ -10,17 +10,20 @@ const Categories: React.FC = () => {
 
 	return (
 		<>
-			<Flex flexDir={'column'} lineHeight={8} py={14}>
-				{user?.admin && (
-					<Button
-						mb={5}
-						bg='teal.400'
-						alignSelf={'flex-end'}
-						color='white'
-						onClick={() => setIsNew(true)}>
-						Add Category
-					</Button>
-				)}
+			<Flex flexDir={'column'} lineHeight={8} py={8}>
+				<Flex mb={6} alignItems='center'>
+					<Heading>Categories</Heading>
+					{user?.admin && (
+						<Button
+							ml='auto'
+							bg='teal.400'
+							color='white'
+							disabled={isNew}
+							onClick={() => setIsNew(true)}>
+							Add Category
+						</Button>
+					)}
+				</Flex>
 
 				<Flex gap={3} flexDir='column'>
 					{isNew && (

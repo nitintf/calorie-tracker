@@ -64,7 +64,10 @@ export default class UserService {
 				select: ['email', 'name', 'password', 'id', 'admin'],
 			})
 
-			const isPasswordValid = await bcrypt.compare(password, user?.password)
+			const isPasswordValid = await bcrypt.compare(
+				password,
+				user?.password ?? ''
+			)
 
 			if (!user || !isPasswordValid) {
 				return errorResponse(res, errorMessage, 401)

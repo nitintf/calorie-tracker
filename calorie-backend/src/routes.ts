@@ -6,7 +6,7 @@ import { Router } from 'express'
 const router = Router()
 
 router.use('/auth', userRoutes)
-router.use('/category', categoryRoute)
+router.use('/categories', categoryRoute)
 router.use('/foods', FoodRoute)
 
 export default router

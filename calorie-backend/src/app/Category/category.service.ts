@@ -1,12 +1,12 @@
 import { Request, Response } from 'express'
 import { errorResponse } from '../../helpers/response'
 import Category from './category.entity'
-import { createCategorySchema, updateCategorySchema } from './category.schema'
+import { categorySchema } from './category.schema'
 
 export default class CategoryService {
 	static async create(req: Request, res: Response) {
 		const { name, maxFoodItems } = req.body
-		const { error } = createCategorySchema.validate(req.body)
+		const { error } = categorySchema.validate(req.body)
 		if (error) {
 			return res.status(400).send(error.details)
 		}
@@ -45,7 +45,7 @@ export default class CategoryService {
 		const { id } = req.params
 
 		const { name, maxFoodItems } = req.body
-		const { error } = updateCategorySchema.validate({ name, maxFoodItems, id })
+		const { error } = categorySchema.validate({ name, maxFoodItems })
 
 		if (error) {
 			return res.status(400).send(error.details)

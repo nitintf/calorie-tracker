@@ -1,9 +1,10 @@
-import { Flex, Heading, Spinner, useToast } from '@chakra-ui/react'
+import { Flex, Heading, useToast } from '@chakra-ui/react'
 import moment from 'moment'
 import React, { useEffect, useState } from 'react'
 import FoodCard from '../components/FoodCard'
 import TopBar from '../components/TopBar'
 import Pagination from '../components/UI/Pagination'
+import Spinner from '../components/UI/Spinner'
 import { errorMessage } from '../helpers/errorMessage'
 import { useAppSelector } from '../redux/hooks'
 import { fetchFoods } from '../services/foodService'
@@ -11,6 +12,7 @@ import { FoodT } from '../types'
 
 const Home: React.FC = () => {
 	const [foodList, setFoodList] = useState<FoodT[] | undefined>(undefined)
+	const [error, setError] = useState<string | null>(null)
 	const [isAddNew, setIsAddNew] = useState(false)
 	const [startDate, setStartDate] = useState(null)
 	const [endDate, setEndDate] = useState(null)
@@ -50,6 +52,7 @@ const Home: React.FC = () => {
 					pageSize: response.data.pageSize,
 				})
 			} catch (error: any) {
+				setError(error.message)
 				toast({
 					title: errorMessage(error),
 					status: 'error',
@@ -63,6 +66,28 @@ const Home: React.FC = () => {
 	const reloadList = () => {
 		setReload((prev) => !prev)
 	}
+
+	let body
+
+	if (foodList?.length === 0)
+		body = <Heading textAlign={'center'}>No Food Items</Heading>
+
+	if (!foodList) body = <Spinner />
+
+	if (error) body = <Heading textAlign={'center'}>{error}</Heading>
+
+	if (!error && foodList?.length! > 0)
+		body = foodList!.map((foodItm) => {
+			return (
+				<FoodCard
+					reloadList={reloadList}
+					key={`${foodItm.id}-${foodItm.calorie}-${foodItm.dailyCalorieSum}`}
+					isNew={false}
+					food={foodItm}
+					setIsAddNew={(value) => setIsAddNew(value)}
+				/>
+			)
+		})
 
 	return (
 		<>
@@ -90,25 +115,7 @@ const Home: React.FC = () => {
 						}}
 					/>
 				)}
-				{foodList?.length === 0 ? (
-					<Heading textAlign={'center'}>No Food Items</Heading>
-				) : !foodList ? (
-					<>
-						<Spinner m={'auto'} color='teal.400' size={'lg'} />
-					</>
-				) : (
-					foodList.map((foodItm) => {
-						return (
-							<FoodCard
-								reloadList={reloadList}
-								key={`${foodItm.id}-${foodItm.calorie}-${foodItm.dailyCalorieSum}`}
-								isNew={false}
-								food={foodItm}
-								setIsAddNew={(value) => setIsAddNew(value)}
-							/>
-						)
-					})
-				)}
+				{body}
 			</Flex>
 			<Pagination
 				currentPage={page}

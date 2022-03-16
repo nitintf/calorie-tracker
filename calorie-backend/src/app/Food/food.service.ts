@@ -5,7 +5,11 @@ import { PAGE_SIZE } from '../../constants'
 import { errorResponse } from '../../helpers/response'
 import Category from '../Category/category.entity'
 import Food from './food.entity'
-import { createFoodSchema, updateFoodSchema } from './food.schema'
+import {
+	createFoodSchema,
+	fetchAllFoodSchema,
+	updateFoodSchema,
+} from './food.schema'
 import User from '../User/user.entity'
 
 type ReportT = {
@@ -18,11 +22,15 @@ export default class FoodService {
 	static async create(req: Request, res: Response) {
 		const { name, categoryId, calorie, dateTime, userId } = req.body
 		const { error } = createFoodSchema.validate(req.body)
+		const date = moment(req.body.dateTime).format('YYYY-MM-DD')
 
 		if (error) {
 			return res.status(400).send(error.details)
 		}
 
+		if (date > moment(Date.now()).format('YYYY-MM-DD')) {
+			return errorResponse(res, 'Invalid date')
+		}
 		try {
 			const category = await Category.findOne(categoryId)
 
@@ -35,7 +43,7 @@ export default class FoodService {
 			const foodsCount = await Food.count({
 				where: {
 					categoryId,
-					userId: req.currentUser.id,
+					userId: userId ?? req.currentUser.id,
 					date: moment(new Date()).format('YYYY-MM-DD'),
 				},
 			})
@@ -43,8 +51,7 @@ export default class FoodService {
 			if (foodsCount >= category.maxFoodItems) {
 				return errorResponse(
 					res,
-					`${category.name} Max limit reached please select another`,
-					409
+					`${category.name.toUpperCase()} Max limit reached please select another category`
 				)
 			}
 
@@ -54,7 +61,7 @@ export default class FoodService {
 			food.dateTime = dateTime
 			food.categoryId = categoryId
 			food.userId = userId
-			food.date = moment(req.body.dateTime).format('YYYY-MM-DD')
+			food.date = date
 
 			await Food.save(food)
 			return res.status(201).json(food)
@@ -67,6 +74,17 @@ export default class FoodService {
 		try {
 			const { currentUser } = req
 			let { page, startDate, endDate } = req.query
+
+			const { error } = fetchAllFoodSchema.validate({
+				page,
+				startDate,
+				endDate,
+			})
+
+			if (error) {
+				return res.status(400).send(error.details)
+			}
+
 			const query: FindCondition<Food> = {}
 
 			if (+page < 1) page = '1'
@@ -77,11 +95,12 @@ export default class FoodService {
 
 			if (startDate && endDate) {
 				startDate = moment(startDate as MomentInput)
-					.startOf('day')
+					.subtract(1, 'day')
+					.endOf('day')
 					.format('YYYY-MM-DD HH:mm:ss')
 				endDate = moment(endDate as MomentInput)
 					.add(1, 'day')
-					.startOf('day')
+					.endOf('day')
 					.format('YYYY-MM-DD HH:mm:ss')
 				query.dateTime = Between(startDate, endDate)
 			}
@@ -144,10 +163,16 @@ export default class FoodService {
 		const { id } = req.params
 		const { error } = updateFoodSchema.validate(req.body)
 		const { name, categoryId, calorie, dateTime } = req.body
+		const date = moment(req.body.dateTime).format('YYYY-MM-DD')
 
 		if (error) {
 			return res.status(400).json(error.details)
 		}
+
+		if (date < moment(Date.now()).format('YYYY-MM-DD')) {
+			return errorResponse(res, 'Invalid date')
+		}
+
 		try {
 			const food = await Food.findOne(id)
 
@@ -166,22 +191,24 @@ export default class FoodService {
 			const foodsCount = await Food.count({
 				where: {
 					categoryId,
-					userId: req.currentUser.id,
-					date: moment(dateTime).format('YYYY-MM-DD'),
+					userId: food.userId ?? req.currentUser.id,
+					date,
 				},
 			})
 
-			if (foodsCount >= category.maxFoodItems) {
+			const totalFoodCount =
+				foodsCount - (food.categoryId === categoryId ? 1 : 0)
+
+			if (totalFoodCount >= category.maxFoodItems) {
 				return errorResponse(
 					res,
-					'Category Max limit reached please select another',
-					409
+					`${category.name.toUpperCase()} Max limit reached please select another category`
 				)
 			}
 
 			food.categoryId = categoryId
 			food.name = name
-			food.date = moment(req.body.dateTime).format('YYYY-MM-DD')
+			food.date = date
 			food.calorie = calorie
 			food.dateTime = dateTime
 

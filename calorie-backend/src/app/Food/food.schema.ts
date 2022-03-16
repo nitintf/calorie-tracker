@@ -1,16 +1,23 @@
 import Joi from 'joi'
 
-export const createFoodSchema = Joi.object({
-	name: Joi.string().min(3).required(),
-	categoryId: Joi.optional(),
+const fields = {
+	name: Joi.string().min(3).trim().required(),
+	categoryId: Joi.number().optional(),
 	dateTime: Joi.date().required(),
-	calorie: Joi.number().min(1).required(),
+	calorie: Joi.number().min(50).max(4000).required(),
+}
+
+export const createFoodSchema = Joi.object({
+	...fields,
 	userId: Joi.number().min(1).required(),
 })
 
 export const updateFoodSchema = Joi.object({
-	name: Joi.string().min(3),
-	categoryId: Joi.optional(),
-	dateTime: Joi.date(),
-	calorie: Joi.number().min(1),
+	...fields,
+})
+
+export const fetchAllFoodSchema = Joi.object({
+	page: Joi.number().min(1),
+	startDate: Joi.date().optional(),
+	endDate: Joi.date().optional(),
 })

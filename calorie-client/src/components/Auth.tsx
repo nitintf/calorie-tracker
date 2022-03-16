@@ -27,7 +27,7 @@ const Auth: FC<IProps> = ({ forAdmin = false, element }) => {
 		)
 
 	if (userError && !user) {
-		return <NotFoundPage />
+		return <NotFoundPage isForbidden={false} />
 	}
 
 	if (!forAdmin) {
@@ -38,7 +38,7 @@ const Auth: FC<IProps> = ({ forAdmin = false, element }) => {
 		return element
 	}
 
-	return <NotFoundPage />
+	return <NotFoundPage isForbidden={true} />
 }
 
 export default React.memo(Auth)

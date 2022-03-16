@@ -44,7 +44,7 @@ function App() {
 						path={ROUTES.REPORTS}
 						element={<Auth forAdmin={true} element={<Reports />} />}
 					/>
-					<Route path='/*' element={<NotFoundPage />} />
+					<Route path='/*' element={<NotFoundPage isForbidden={false} />} />
 				</Routes>
 			</Wrapper>
 		</BrowserRouter>
