@@ -3,7 +3,7 @@ import User from "./app/User/user.entity";
 
 const update = async () => {
     await connectDb()
-    await User.update({ id: 2 }, { dailyCalorieLimit: 3000 })
+    await User.update({ id: 2 }, { dailyCalorieLimit: 2900 })
 }
 
 update()

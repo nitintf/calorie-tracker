@@ -1,284 +1,271 @@
-import { Request, Response } from 'express'
-import moment, { MomentInput } from 'moment'
-import { Between, FindCondition, getRepository, LessThan } from 'typeorm'
-import { PAGE_SIZE } from '../../constants'
-import { errorResponse } from '../../helpers/response'
+import {Request, Response} from 'express'
+import moment, {MomentInput} from 'moment'
+import {Between, FindCondition, getRepository, LessThan} from 'typeorm'
+import {PAGE_SIZE} from '../../constants'
+import {errorResponse} from '../../helpers/response'
 import Category from '../Category/category.entity'
 import Food from './food.entity'
 import {
-	createFoodSchema,
-	fetchAllFoodSchema,
-	updateFoodSchema,
+    createFoodSchema,
+    fetchAllFoodSchema,
+    updateFoodSchema,
 } from './food.schema'
 import User from '../User/user.entity'
 
 type ReportT = {
-	today: number
-	thisWeek: number
-	lastWeek: number
+    today: number
+    thisWeek: number
+    lastWeek: number
 }
 
 export default class FoodService {
-	static async create(req: Request, res: Response) {
-		const { name, categoryId, calorie, dateTime, userId } = req.body
-		const { error } = createFoodSchema.validate(req.body)
-		const date = moment(req.body.dateTime).format('YYYY-MM-DD')
+    static async create(req: Request, res: Response) {
+        const {name, categoryId, calorie, dateTime, userId} = req.body
+        const {error} = createFoodSchema.validate(req.body)
+        const date = moment(req.body.dateTime).format('YYYY-MM-DD')
 
-		if (error) {
-			return res.status(400).send(error.details)
-		}
+        if (error) {
+            return res.status(400).send(error.details)
+        }
 
-		if (date > moment(Date.now()).format('YYYY-MM-DD')) {
-			return errorResponse(res, 'Invalid date')
-		}
-		try {
-			const category = await Category.findOne(categoryId)
+        if (date > moment(Date.now()).format('YYYY-MM-DD')) {
+            return errorResponse(res, 'Invalid date')
+        }
+        try {
+            const category = await Category.findOne({where: {id: categoryId}})
 
-			if (!category) return errorResponse(res, 'Category not found', 404)
+            if (categoryId && !category) return errorResponse(res, 'Category not found', 404)
 
-			const user = await User.findOne(userId)
+            const user = await User.findOne({where: {id: userId}})
+            if (userId && !user) return errorResponse(res, 'User not found', 404)
 
-			if (!user) return errorResponse(res, 'User not found', 404)
 
-			const foodsCount = await Food.count({
-				where: {
-					categoryId,
-					userId: userId ?? req.currentUser.id,
-					date: moment(new Date()).format('YYYY-MM-DD'),
-				},
-			})
+            const foodsCount = await Food.count({
+                where: {
+                    categoryId,
+                    userId: (req.currentUser.admin && userId) ? userId : req.currentUser.id,
+                    date,
+                },
+            })
 
-			if (foodsCount >= category.maxFoodItems) {
-				return errorResponse(
-					res,
-					`${category.name.toUpperCase()} Max limit reached please select another category`
-				)
-			}
+            if (category && foodsCount >= category.maxFoodItems) {
+                return errorResponse(
+                    res,
+                    `${category.name.toUpperCase()} Max limit reached please select another category`
+                )
+            }
 
-			const food = Food.create()
-			food.calorie = calorie
-			food.name = name
-			food.dateTime = dateTime
-			food.categoryId = categoryId
-			food.userId = userId
-			food.date = date
+            const food = Food.create()
+            food.calorie = calorie
+            food.name = name
+            food.dateTime = dateTime
+            food.categoryId = categoryId
+            food.userId = (req.currentUser.admin && userId) ? userId : req.currentUser.id
+            food.date = date
 
-			await Food.save(food)
-			return res.status(201).json(food)
-		} catch (error) {
-			return res.status(500).send(error)
-		}
-	}
+            await Food.save(food)
+            return res.status(201).json(food)
+        } catch (error) {
+            return res.status(500).send(error)
+        }
+    }
 
-	static async fetchAll(req: Request, res: Response) {
-		try {
-			const { currentUser } = req
-			let { page, startDate, endDate } = req.query
+    static async fetchAll(req: Request, res: Response) {
+        try {
+            const {currentUser} = req
+            let {page = 1, startDate, endDate} = req.query
 
-			const { error } = fetchAllFoodSchema.validate({
-				page,
-				startDate,
-				endDate,
-			})
+            const {error} = fetchAllFoodSchema.validate({
+                page,
+                startDate,
+                endDate,
+            })
 
-			if (error) {
-				return res.status(400).send(error.details)
-			}
+            if (error) {
+                return res.status(400).send(error.details)
+            }
 
-			const query: FindCondition<Food> = {}
+            const query: FindCondition<Food> = {}
 
-			if (+page < 1) page = '1'
+            if ((startDate && !endDate) || (endDate && !startDate))
+                return errorResponse(res, 'Both start date and end date is required')
 
-			if (moment(endDate as MomentInput) > moment(new Date())) {
-				return errorResponse(res, 'Invalid End Date')
-			}
+            if (startDate && endDate) {
+                if (startDate > endDate) return errorResponse(res, `Start date can't be greater than end date`)
 
-			if (startDate && endDate) {
-				startDate = moment(startDate as MomentInput)
-					.subtract(1, 'day')
-					.endOf('day')
-					.format('YYYY-MM-DD HH:mm:ss')
-				endDate = moment(endDate as MomentInput)
-					.add(1, 'day')
-					.endOf('day')
-					.format('YYYY-MM-DD HH:mm:ss')
-				query.dateTime = Between(startDate, endDate)
-			}
+                startDate = moment(startDate as MomentInput)
+                    .subtract(1, 'day')
+                    .endOf('day')
+                    .format('YYYY-MM-DD HH:mm:ss')
+                endDate = moment(endDate as MomentInput)
+                    .add(1, 'day')
+                    .endOf('day')
+                    .format('YYYY-MM-DD HH:mm:ss')
+                query.dateTime = Between(startDate, endDate)
+            }
 
-			if (!currentUser?.admin) query.userId = currentUser?.id
+            if (!currentUser.admin) query.userId = currentUser.id
 
-			const [foods, pageCount] = await Food.findAndCount({
-				where: query,
-				take: PAGE_SIZE,
-				skip: (+page! - 1) * PAGE_SIZE,
-				order: { dateTime: 'DESC' },
-				relations: ['user'],
-			})
+            const [foods, pageCount] = await Food.findAndCount({
+                where: query,
+                take: PAGE_SIZE,
+                skip: (+page! - 1) * PAGE_SIZE,
+                order: {dateTime: 'DESC'},
+                relations: ['user'],
+            })
 
-			const dailyCalorie = await getRepository(Food)
-				.createQueryBuilder('foods')
-				.select('SUM(foods.calorie)', 'sum')
-				.addSelect('foods.date')
-				.addSelect('foods.userId')
-				.groupBy('foods.userId')
-				.addGroupBy('foods.date')
-				.having(startDate ? 'foods.datetime > :startDate' : '1=1', {
-					startDate: `${startDate}`,
-				})
-				.andHaving(endDate ? 'foods.datetime < :endDate' : '1=1', {
-					endDate: `${endDate}`,
-				})
-				.getRawMany()
+            const dailyCalorie = await getRepository(Food)
+                .createQueryBuilder('foods')
+                .select('SUM(foods.calorie)', 'sum')
+                .addSelect('foods.date')
+                .addSelect('foods.userId')
+                .groupBy('foods.userId')
+                .addGroupBy('foods.date')
+                .getRawMany()
 
-			const responseCaloriesSum = dailyCalorie.map((calorie) => {
-				return {
-					[`${calorie.foods_date}-${calorie.foods_userId}`]: calorie.sum,
-				}
-			})
-			const responseFoods = foods.map((food) => {
-				const sum = responseCaloriesSum.find(
-					(sum) => sum[`${food.date}-${food.userId}`]
-				)
-				const { user: _, ...foodsObj } = food
-				return {
-					...foodsObj,
-					dailyCalorieSum: Object.values(sum)[0],
-					dailyCalorieLimit: food.user.dailyCalorieLimit,
-				}
-			})
+            const responseCaloriesSum = dailyCalorie.reduce((total,calorie) => {
+                const key = `${calorie.foods_date}:${calorie.foods_userId}`;
+                total[key] = calorie.sum
+                return total;
+            }, {})
+            const responseFoods = foods.map((food) => {
+                const dailyCalorieSum = responseCaloriesSum[`${food.date}:${food.userId}`]
+                return {
+                    ...food,
+                    user:undefined,
+                    dailyCalorieSum,
+                    dailyCalorieLimit: food.user.dailyCalorieLimit,
+                }
+            })
 
-			return res.status(200).json({
-				foods: responseFoods,
-				page: page,
-				pageCount: pageCount,
-				pageSize: PAGE_SIZE,
-			})
-		} catch (error) {
-			console.log('error :>> ', error)
-			res.sendStatus(500)
-		}
-	}
+            return res.status(200).json({
+                foods: responseFoods,
+                page: page,
+                pageCount: pageCount,
+                pageSize: PAGE_SIZE,
+            })
+        } catch (error) {
+            console.log('error :>> ', error)
+            res.sendStatus(500)
+        }
+    }
 
-	static async update(req: Request, res: Response) {
-		const { id } = req.params
-		const { error } = updateFoodSchema.validate(req.body)
-		const { name, categoryId, calorie, dateTime } = req.body
-		const date = moment(req.body.dateTime).format('YYYY-MM-DD')
+    static async update(req: Request, res: Response) {
+        const {id} = req.params
+        const {error} = updateFoodSchema.validate(req.body)
+        const {name, categoryId, calorie, dateTime} = req.body
+        const date = moment(req.body.dateTime).format('YYYY-MM-DD')
 
-		if (error) {
-			return res.status(400).json(error.details)
-		}
+        if (error) {
+            return res.status(400).json(error.details)
+        }
 
-		if (date < moment(Date.now()).format('YYYY-MM-DD')) {
-			return errorResponse(res, 'Invalid date')
-		}
 
-		try {
-			const food = await Food.findOne(id)
+        try {
+            const food = await Food.findOne(id)
 
-			if (!food) {
-				return errorResponse(res, 'Food not found', 404)
-			}
+            if (!food) {
+                return errorResponse(res, 'Food not found', 404)
+            }
 
-			if (req.currentUser.id !== food.userId && !req.currentUser.admin) {
-				return errorResponse(res, 'Permission Denied', 403)
-			}
+            if (req.currentUser.id !== food.userId && !req.currentUser.admin) {
+                return errorResponse(res, 'Permission Denied', 403)
+            }
 
-			const category = await Category.findOne(categoryId)
+            const category = await Category.findOne({where:{id: categoryId}})
 
-			if (!category) return errorResponse(res, 'Category not found', 404)
+            if (categoryId && !category) return errorResponse(res, 'Category not found', 404)
 
-			const foodsCount = await Food.count({
-				where: {
-					categoryId,
-					userId: food.userId ?? req.currentUser.id,
-					date,
-				},
-			})
+            const foodsCount = await Food.count({
+                where: {
+                    categoryId,
+                    userId: food.userId,
+                    date,
+                },
+            })
 
-			const totalFoodCount =
-				foodsCount - (food.categoryId === categoryId ? 1 : 0)
+            const totalFoodCount =
+                foodsCount - (food.categoryId === categoryId ? 1 : 0)
 
-			if (totalFoodCount >= category.maxFoodItems) {
-				return errorResponse(
-					res,
-					`${category.name.toUpperCase()} Max limit reached please select another category`
-				)
-			}
+            if (category && totalFoodCount >= category.maxFoodItems) {
+                return errorResponse(
+                    res,
+                    `${category.name.toUpperCase()} Max limit reached please select another category`
+                )
+            }
 
-			food.categoryId = categoryId
-			food.name = name
-			food.date = date
-			food.calorie = calorie
-			food.dateTime = dateTime
+            food.categoryId = categoryId
+            food.name = name
+            food.date = date
+            food.calorie = calorie
+            food.dateTime = dateTime
 
-			await Food.save(food!)
+            await Food.save(food!)
+            return res.status(200).json(food)
+        } catch (error) {
+            console.log('error :>> ', error)
+            return res.status(500).send(error)
+        }
+    }
 
-			return res.status(200).json(food)
-		} catch (error) {
-			console.log('error :>> ', error)
-			return res.status(500).send(error)
-		}
-	}
+    static async delete(req: Request, res: Response) {
+        const {id} = req.params
 
-	static async delete(req: Request, res: Response) {
-		const { id } = req.params
+        try {
+            const food = await Food.findOne({where: {id}})
 
-		try {
-			const food = await Food.findOne(id)
+            if (!food) {
+                return errorResponse(res, 'Food not found', 404)
+            }
 
-			if (!food) {
-				return errorResponse(res, 'Food not found', 404)
-			}
+            if (food.userId !== req.currentUser.id && !req.currentUser.admin) {
+                return errorResponse(res, 'Permision denied', 403)
+            }
 
-			if (food.userId !== req.currentUser.id && !req.currentUser.admin) {
-				return errorResponse(res, 'Permision denied', 403)
-			}
+            await Food.remove(food!)
 
-			await Food.remove(food!)
+            return res.status(200).send('Succesfully Deleted')
+        } catch (error) {
+            return res.status(500).send(error)
+        }
+    }
 
-			return res.status(200).send('Succesfully Deleted')
-		} catch (error) {
-			return res.status(500).send(error)
-		}
-	}
+    static async reports(req: Request, res: Response) {
+        try {
+            const today = new Date()
+            const week = new Date()
+            week.setDate(today.getDate() - 7)
 
-	static async reports(req: Request, res: Response) {
-		try {
-			const today = new Date()
-			const week = new Date()
-			week.setDate(today.getDate() - 7)
+            const reports: ReportT = {
+                today: 0,
+                lastWeek: 0,
+                thisWeek: 0,
+            }
 
-			const reports: ReportT = {
-				today: 0,
-				lastWeek: 0,
-				thisWeek: 0,
-			}
+            reports['today'] = await Food.count({
+                where: {
+                    date: moment(today).format('YYYY-MM-DD'),
+                },
+            })
 
-			reports['today'] = await Food.count({
-				where: {
-					date: moment(today).format('YYYY-MM-DD'),
-				},
-			})
+            reports['lastWeek'] = await Food.count({
+                where: {
+                    date: LessThan(moment(week).format('YYYY-MM-DD')),
+                },
+            })
 
-			reports['lastWeek'] = await Food.count({
-				where: {
-					date: LessThan(moment(week).format('YYYY-MM-DD')),
-				},
-			})
+            reports['thisWeek'] = await Food.count({
+                where: {
+                    date: Between(
+                        moment(week).format('YYYY-MM-DD'),
+                        moment(today).format('YYYY-MM-DD')
+                    ),
+                },
+            })
 
-			reports['thisWeek'] = await Food.count({
-				where: {
-					date: Between(
-						moment(week).format('YYYY-MM-DD'),
-						moment(today).format('YYYY-MM-DD')
-					),
-				},
-			})
-
-			return res.status(200).json(reports)
-		} catch (error) {
-			return res.status(500).send(error)
-		}
-	}
+            return res.status(200).json(reports)
+        } catch (error) {
+            return res.status(500).send(error)
+        }
+    }
 }
