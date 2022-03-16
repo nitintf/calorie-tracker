@@ -36,7 +36,7 @@ const Reports: React.FC = () => {
 	return (
 		<>
 			<Heading mb={8}>Admin Report</Heading>
-			<Flex gap={4} alignItems='center' flexWrap={'wrap'}>
+			<Flex gap={4} alignItems={'flex-start'} flexWrap={'wrap'} >
 				{isLoading ? (
 					<>
 						<Spinner />
@@ -47,28 +47,36 @@ const Reports: React.FC = () => {
 					</>
 				) : (
 					<>
-						<Card width='400px'>
-							<Heading color={'teal.400'} size='md' fontWeight={500}>
-								Today
+						<Card width='300px'>
+							<Heading color={'teal.400'} size='sm' fontWeight={500}>
+								Entries added Today
 							</Heading>
 							<Heading mt={5} size='2xl'>
 								{reports?.today}
 							</Heading>
 						</Card>
-						<Card width='400px'>
-							<Heading color={'teal.400'} size='md' fontWeight={500}>
-								This Week
+						<Card width='300px'>
+							<Heading color={'teal.400'} size='sm' fontWeight={500}>
+								Entries added This Week
 							</Heading>
 							<Heading mt={5} size='2xl'>
 								{reports?.thisWeek}
 							</Heading>
 						</Card>
-						<Card width='400px'>
-							<Heading color={'teal.400'} size='md' fontWeight={500}>
-								Before 1 week
+						<Card width='300px'>
+							<Heading color={'teal.400'} size='sm' fontWeight={500}>
+								Entries added Before 1 week
 							</Heading>
 							<Heading mt={5} size='2xl'>
 								{reports?.lastWeek}
+							</Heading>
+						</Card>
+						<Card width='300px'>
+							<Heading color={'teal.400'} size='sm' fontWeight={500}>
+								Average Calorie added this week
+							</Heading>
+							<Heading mt={5} size='2xl'>
+								{reports?.avgCalorie}
 							</Heading>
 						</Card>
 					</>

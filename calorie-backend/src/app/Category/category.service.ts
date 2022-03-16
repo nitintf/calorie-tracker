@@ -52,24 +52,26 @@ export default class CategoryService {
 		}
 
 		try {
-			const categoryExists = await Category.findOne({
-				where: { name, id: !id },
-			})
-
-			if (categoryExists) return errorResponse(res, 'Category already exists')
-
-			const category = await Category.findOne(id)
+			const category = await Category.findOne({ where: { id } })
 
 			if (!category) {
 				return errorResponse(res, 'Category not found', 404)
 			}
 
-			Object.assign(category!, req.body)
+			const categoryFound = await Category.findOne({
+				where: { name },
+			})
 
-			Category.save(category!)
+			if ( categoryFound && categoryFound.id != +id) return errorResponse(res, 'Category already exists')
+
+			category.name = name
+			category.maxFoodItems = maxFoodItems
+
+			await Category.save(category!)
 
 			return res.status(200).json(category)
 		} catch (error) {
+			console.log(error)
 			return res.status(500).send(error)
 		}
 	}
@@ -78,13 +80,13 @@ export default class CategoryService {
 		const { id } = req.params
 
 		try {
-			const category = await Category.findOne(id)
+			const category = await Category.findOne({where: {id}})
 
 			if (!category) {
 				return errorResponse(res, 'Category not found', 404)
 			}
 
-			Category.remove(category!)
+			await Category.remove(category!)
 
 			return res.status(200).send('Succesfully Deleted')
 		} catch (error) {

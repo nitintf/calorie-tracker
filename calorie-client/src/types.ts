@@ -29,4 +29,5 @@ export interface ReportT {
     today: number
     thisWeek: number
     lastWeek: number
+    avgCalorie: number
 }

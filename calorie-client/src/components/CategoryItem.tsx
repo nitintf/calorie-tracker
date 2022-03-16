@@ -56,6 +56,10 @@ const CategoryItem: React.FC<CategoryItemT> = ({
 
                 dispatch(addOneCategories(response.data))
                 setIsNew!(false)
+                toast({
+                    title: 'Added Succesfully',
+                    status: 'success',
+                })
             } else {
                 const response = await updateCategoryService(
                     {
@@ -66,13 +70,13 @@ const CategoryItem: React.FC<CategoryItemT> = ({
                 )
                 dispatch(updateCategories(response.data))
                 setIsEdit(false)
+                toast({
+                    title: 'Updated Succesfully',
+                    status: 'success',
+                })
             }
-
-            toast({
-                title: 'Updated Succesfully',
-                status: 'success',
-            })
         } catch (error: any) {
+            setCatg(category)
             setIsEdit(false)
             toast({
                 title: errorMessage(error),

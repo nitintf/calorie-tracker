@@ -66,13 +66,13 @@ const FoodCard: React.FC<FoodCardProps> = ({
 
 		if (userId! < 1)
 			return toast({
-				title: 'userId must be greater than 50',
+				title: 'userId must be greater than 0',
 				status: 'error',
 			})
 
 		if (calorie < 50)
 			return toast({
-				title: 'Calorie must be greater than 0',
+				title: 'Calorie must be greater or equal than 50',
 				status: 'error',
 			})
 
@@ -85,14 +85,19 @@ const FoodCard: React.FC<FoodCardProps> = ({
 
 		try {
 			if (isNew) {
-				await addFoodService({ ...body, userId: foodItem.userId })
+				const payload: any = {...body, ...(user?.admin && {userId : foodItem.userId })}
+				await addFoodService(payload)
+				toast({
+					status: 'success',
+					title: 'Added Successfully',
+				})
 			} else {
 				await updateFoodService(foodItem.id!, body)
+				toast({
+					status: 'success',
+					title: 'Updated Successfully',
+				})
 			}
-			toast({
-				status: 'success',
-				title: 'Updated Successfully',
-			})
 			reloadList()
 			setIsEdit(false)
 			setIsAddNew(false)

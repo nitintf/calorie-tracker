@@ -12,12 +12,6 @@ import {
 } from './food.schema'
 import User from '../User/user.entity'
 
-type ReportT = {
-    today: number
-    thisWeek: number
-    lastWeek: number
-}
-
 export default class FoodService {
     static async create(req: Request, res: Response) {
         const {name, categoryId, calorie, dateTime, userId} = req.body
@@ -28,9 +22,6 @@ export default class FoodService {
             return res.status(400).send(error.details)
         }
 
-        if (date > moment(Date.now()).format('YYYY-MM-DD')) {
-            return errorResponse(res, 'Invalid date')
-        }
         try {
             const category = await Category.findOne({where: {id: categoryId}})
 
@@ -51,7 +42,7 @@ export default class FoodService {
             if (category && foodsCount >= category.maxFoodItems) {
                 return errorResponse(
                     res,
-                    `${category.name.toUpperCase()} Max limit reached please select another category`
+                    `${category.name.toUpperCase()} Max limit of ${category.maxFoodItems} reached please select another category`
                 )
             }
 
@@ -62,7 +53,6 @@ export default class FoodService {
             food.categoryId = categoryId
             food.userId = (req.currentUser.admin && userId) ? userId : req.currentUser.id
             food.date = date
-
             await Food.save(food)
             return res.status(201).json(food)
         } catch (error) {
@@ -236,10 +226,11 @@ export default class FoodService {
             const week = new Date()
             week.setDate(today.getDate() - 7)
 
-            const reports: ReportT = {
+            const reports: any = {
                 today: 0,
                 lastWeek: 0,
                 thisWeek: 0,
+                avgCalorie: 0
             }
 
             reports['today'] = await Food.count({
@@ -248,13 +239,13 @@ export default class FoodService {
                 },
             })
 
-            reports['lastWeek'] = await Food.count({
+            reports['lastWeek']= await Food.count({
                 where: {
                     date: LessThan(moment(week).format('YYYY-MM-DD')),
                 },
             })
 
-            reports['thisWeek'] = await Food.count({
+            const foodThisWeek = await Food.find({
                 where: {
                     date: Between(
                         moment(week).format('YYYY-MM-DD'),
@@ -262,6 +253,14 @@ export default class FoodService {
                     ),
                 },
             })
+            let totalCal = 0
+            const len = foodThisWeek.length;
+            for (let i = 0; i < len; i++) {
+                totalCal += foodThisWeek[i].calorie;
+            }
+            reports['thisWeek'] = foodThisWeek.length
+
+            reports['avgCalorie'] = +(totalCal / len).toFixed(2);
 
             return res.status(200).json(reports)
         } catch (error) {

@@ -20,7 +20,7 @@ const currentUserMiddleware = async (
 	if (token) {
 		try {
 			const userId = verifyJwt(token)
-			const user = await User.findOne(parseInt(userId))
+			const user = await User.findOne({where: {id: userId}})
 
 			if (!user) {
 				return res.status(401).send('Unauthorized')
