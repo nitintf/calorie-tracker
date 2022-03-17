@@ -50,7 +50,7 @@ const CategoryItem: React.FC<CategoryItemT> = ({
         try {
             if (isNew) {
                 const response = await addCategoryService({
-                    name: catg.name,
+                    name: catg.name.trim(),
                     maxFoodItems: catg.maxFoodItems,
                 })
 
@@ -63,7 +63,7 @@ const CategoryItem: React.FC<CategoryItemT> = ({
             } else {
                 const response = await updateCategoryService(
                     {
-                        name: catg.name,
+                        name: catg.name.trim(),
                         maxFoodItems: catg.maxFoodItems,
                     },
                     catg.id!
@@ -115,7 +115,7 @@ const CategoryItem: React.FC<CategoryItemT> = ({
                 value={catg.name}
             />
             <Flex gap={2}>
-                <Text  fontWeight={'700'}>Max Food Items : </Text>
+                <Text fontWeight={'700'}>Max Food Items : </Text>
                 <EditableNumber
                     placeholder='Enter max no. of food items'
                     value={category.maxFoodItems}
