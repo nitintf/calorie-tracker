@@ -175,12 +175,12 @@ export default class FoodService {
             })
 
             const totalFoodCount =
-                foodsCount - (food.categoryId === categoryId ? 1 : 0)
+                foodsCount - ((food.categoryId === categoryId && food.date === date) ? 1 : 0)
 
             if (category && totalFoodCount >= category.maxFoodItems) {
                 return errorResponse(
                     res,
-                    `${category.name.toUpperCase()} Max limit reached please select another category`
+                    `${category.name.toUpperCase()} Max limit of ${category.maxFoodItems} reached please select another category`
                 )
             }
 
