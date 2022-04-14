@@ -9,7 +9,7 @@ const userToken =
 let API = axios.create({
 	baseURL: 'http://localhost:4000',
 	headers: {
-		Authorization: `Bearer ${adminToken}`,
+		Authorization: `Bearer ${userToken}`,
 	},
 })
 
